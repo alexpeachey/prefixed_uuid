@@ -7,6 +7,7 @@ defmodule PrefixedUUIDTest do
     use PrefixedUUID.Schema, prefix: "test"
 
     schema "test" do
+      field(:external_id, PrefixedUUID, prefix: "external")
       belongs_to(:test, TestSchema)
     end
   end
@@ -19,9 +20,16 @@ defmodule PrefixedUUIDTest do
             prefix: "test"
           )
   @belongs_to_params PrefixedUUID.init(schema: TestSchema, field: :test, foreign_key: :test_id)
+  @external_id_params PrefixedUUID.init(
+                        schema: TestSchema,
+                        field: :external_id,
+                        prefix: "external"
+                      )
   @loader nil
   @dumper nil
 
+  @external_prefixed_uuid "external_3TUIKuXX5mNO2jSA41bsDx"
+  @external_uuid UUID.to_string("7232b37d-fc13-44c0-8e1b-9a5a07e24921", :raw)
   @test_prefixed_uuid "test_3TUIKuXX5mNO2jSA41bsDx"
   @test_uuid UUID.to_string("7232b37d-fc13-44c0-8e1b-9a5a07e24921", :raw)
   @test_prefixed_uuid_with_leading_zero "test_02tREKF6r6OCO2sdSjpyTm"
@@ -45,6 +53,9 @@ defmodule PrefixedUUIDTest do
     assert PrefixedUUID.cast(@test_prefixed_uuid_invalid_characters, @params) == :error
     assert PrefixedUUID.cast(@test_prefixed_uuid_invalid_format, @params) == :error
 
+    assert PrefixedUUID.cast(@external_prefixed_uuid, @external_id_params) ==
+             {:ok, @external_prefixed_uuid}
+
     assert PrefixedUUID.cast(@test_prefixed_uuid, @belongs_to_params) ==
              {:ok, @test_prefixed_uuid}
   end
@@ -61,6 +72,9 @@ defmodule PrefixedUUIDTest do
     assert PrefixedUUID.load(@test_prefixed_uuid, @loader, @params) == :error
     assert PrefixedUUID.load(nil, @loader, @params) == {:ok, nil}
 
+    assert PrefixedUUID.load(@external_uuid, @loader, @external_id_params) ==
+             {:ok, @external_prefixed_uuid}
+
     assert PrefixedUUID.load(@test_uuid, @loader, @belongs_to_params) ==
              {:ok, @test_prefixed_uuid}
   end
@@ -74,6 +88,9 @@ defmodule PrefixedUUIDTest do
     assert PrefixedUUID.dump(@test_prefixed_uuid_null, @dumper, @params) == {:ok, @test_uuid_null}
     assert PrefixedUUID.dump(@test_uuid, @dumper, @params) == :error
     assert PrefixedUUID.dump(nil, @dumper, @params) == {:ok, nil}
+
+    assert PrefixedUUID.dump(@external_prefixed_uuid, @dumper, @external_id_params) ==
+             {:ok, @external_uuid}
 
     assert PrefixedUUID.dump(@test_prefixed_uuid, @dumper, @belongs_to_params) ==
              {:ok, @test_uuid}

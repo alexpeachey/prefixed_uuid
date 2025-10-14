@@ -19,24 +19,21 @@ defmodule PrefixedUUID do
     schema = Keyword.fetch!(opts, :schema)
     field = Keyword.fetch!(opts, :field)
     uniq = Uniq.UUID.init(schema: schema, field: field, version: 7, default: :raw, dump: :raw)
+    foreign_key? = Keyword.get(opts, :foreign_key) != nil
 
-    case opts[:primary_key] do
-      true ->
-        prefix = Keyword.get(opts, :prefix) || raise "`:prefix` option is required"
+    if foreign_key? do
+      %{
+        schema: schema,
+        field: field,
+        uniq: uniq
+      }
+    else
+      prefix = Keyword.get(opts, :prefix) || raise "`:prefix` option is required"
 
-        %{
-          primary_key: true,
-          schema: schema,
-          prefix: prefix,
-          uniq: uniq
-        }
-
-      _any ->
-        %{
-          schema: schema,
-          field: field,
-          uniq: uniq
-        }
+      %{
+        prefix: prefix,
+        uniq: uniq
+      }
     end
   end
 
@@ -76,7 +73,7 @@ defmodule PrefixedUUID do
   end
 
   @spec prefix(map()) :: String.t()
-  def prefix(%{primary_key: true, prefix: prefix}), do: prefix
+  def prefix(%{prefix: prefix}), do: prefix
 
   # If we deal with a belongs_to assocation we need to fetch the prefix from
   # the associations schema module
